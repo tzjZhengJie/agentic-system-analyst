@@ -255,9 +255,8 @@ Excel exports include two tabs: `Dashboard_Data` (query results) and `SQL_QA_Aud
 ## Next Steps
 
 - [ ] Migrate nodes into a LangGraph `StateGraph` with explicit conditional edges
-- [ ] Replace JSON glossary with ChromaDB vector search (true semantic RAG)
+- [ ] Replace JSON glossary with ChromaDB vector search (true semantic RAG) ✅ (Done)
 - [ ] Add Redis schema cache with TTL-based invalidation on migrations
-- [ ] Add `EXPLAIN ANALYZE` pre-execution check in the Critic node
 - [ ] Multi-question session state for follow-up questions
 
 ---
