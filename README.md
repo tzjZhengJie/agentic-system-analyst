@@ -9,9 +9,9 @@ Ask a plain-English question about an e-commerce dataset. The agent writes the S
 ## Architecture
 
 ```
-User Question
-     │
-     ▼
+          User Question
+               │
+               ▼
 ┌─────────────────────────────┐
 │  Node A: RAG Lookup         │  Keyword-matches question → business_glossary.json
 │                             │  Injects metric formulas + join rules into SQL prompt
@@ -21,6 +21,7 @@ User Question
 ┌─────────────────────────────┐
 │  Node B: Query Planner      │  Decomposes question → structured QueryPlan
 │                             │  Resolves ambiguity before SQL is written
+|                             |  Return unknown if user's prompt is gibberish or unclear
 └──────────────┬──────────────┘
                │
                ▼
@@ -112,9 +113,6 @@ Previously: 6 `create_engine()` + `OpenAI()` calls across 5 files = 5 separate c
 Business rules (CAC join strategy, cohort denominators) cannot be inferred from column names — they encode domain decisions that need retrieval.
 
 Schema is deterministic and cached in-memory via SQLAlchemy.
-
-> **Interview answer for "when would you scale this?"**
-> At 4 tables, in-memory JSON glossary is the right tradeoff. At 50+ tables: move metric definitions into ChromaDB, cache schema in Redis with TTL-based invalidation on migrations.
 
 ---
 
