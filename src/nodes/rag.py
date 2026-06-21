@@ -63,6 +63,7 @@ TOP_K = 3
 # If wrong metrics are sneaking in    → lower MIN_DISTANCE closer to 0.3
 # 0.45 is calibrated for this 11-metric glossary with text-embedding-3-small. means we require similarity >= 0.65.
 # Tune this by running queries and inspecting the distances printed below.
+
 MIN_DISTANCE = 0.45
 
 

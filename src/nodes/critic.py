@@ -17,6 +17,7 @@
 # Output (summarise_node): final_summary
 
 import re
+import os
 import pandas as pd
 
 from src.infra import llm, engine, FAST_MODEL
@@ -88,13 +89,24 @@ def _export_to_excel(df: pd.DataFrame, state: AgentState):
             if df[col].dt.tz is not None:
                 df[col] = df[col].dt.strftime("%Y-%m-%d")
 
-    path = "agent_dashboard_data.xlsx"
+    base_path = "agent_dashboard_data.xlsx"
+    path = base_path
+    
+    # Check if file exists and generate a new name (e.g., agent_dashboard_data (1).xlsx)
+    if os.path.exists(path):
+        counter = 1
+        name, ext = os.path.splitext(base_path)
+        while os.path.exists(f"{name} ({counter}){ext}"):
+            counter += 1
+        path = f"{name} ({counter}){ext}"
+
     with pd.ExcelWriter(path, engine="openpyxl") as writer:
         df.to_excel(writer, index=False, sheet_name="Dashboard_Data")
         pd.DataFrame({
             "Audit Parameter": ["Question", "SQL"],
-            "Value":           [state["user_question"], state["generated_sql"]]
+            "Value": [state["user_question"], state["generated_sql"]]
         }).to_excel(writer, index=False, sheet_name="SQL_QA_Audit")
+        
     print(f"[Summariser] 📁 Exported to {path}")
 
 
