@@ -73,7 +73,7 @@ MetricContract(
     sql_guard_phrases=["IS NULL", "LEFT JOIN", "INTERVAL"],   # must appear in SQL
     sql_forbidden_phrases=["COUNT(DISTINCT curr.user_id) AS churned"],  # must not
     result_invariants=[("churned", "<=", "base")],            # checked row-by-row on DataFrame
-    expected_rate_range=(30.0, 80.0),
+    expected_rate_range=(30.0, 80.0) #Removed from the latest commit
 )
 ```
 
