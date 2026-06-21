@@ -65,7 +65,7 @@ Ask a plain-English question about an e-commerce dataset. The agent writes the S
 
 ### 1. MetricContract Engine (`src/metric_contracts.py`)
 
-The standout architectural piece. Structural invariants for each metric are encoded as **data**, not `if/elif` chains:
+Structural invariants for each metric are encoded as **data**, not `if/elif` chains:
 
 ```python
 MetricContract(
