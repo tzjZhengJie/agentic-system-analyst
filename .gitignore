@@ -1,0 +1,38 @@
+# Environment
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Output files
+agent_dashboard_data.xlsx
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# ChromaDB vector store (rebuilt from source with build_index.py)
+.chromadb/

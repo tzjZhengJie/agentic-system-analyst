@@ -1,0 +1,166 @@
+{
+    "_comment": "DEVELOPMENT NOTE: This static JSON glossary is implemented strictly for multi-agent pattern learning and local testing. For real-world enterprise production environments, an absolute Single Source of Truth must be maintained by integrating agent execution nodes with a centralized Semantic Layer (such as dbt Semantic Layer or Cube.js) or dynamic Vector Database embeddings (such as ChromaDB or pgvector) to preserve semantic flexibility, scaling stability, and metric alignment across all BI platforms.",
+    "customer_acquisition_cost": {
+        "keywords": [
+            "cac",
+            "acquisition cost",
+            "cost to acquire"
+        ],
+        "formula": "(SELECT SUM(spend) FROM marketing_campaigns) / NULLIF((SELECT COUNT(DISTINCT user_id) FROM users), 0)",
+        "rules": [
+            "NEVER join marketing_campaigns directly to the users or orders table in a many-to-many fashion; doing so causes a catastrophic row explosion that corrupts SUM(spend).",
+            "To calculate global CAC, compute the total spend and total unique users in entirely independent subqueries or separate CTE blocks instead of joining them.",
+            "Do NOT use marketing_campaigns.conversions as the denominator; conversions represent top-of-funnel web events, not unique user accounts."
+        ]
+    },
+    "payback_period": {
+        "keywords": [
+            "payback",
+            "pay back",
+            "recoup"
+        ],
+        "formula": "CAC / (ARPU * 0.80)",
+        "rules": [
+            "Calculate Average Revenue Per User (ARPU) by dividing total revenue by total distinct users.",
+            "Apply a strict 80% multiplier to revenue calculations to account for operational gross margins as requested by stakeholders."
+        ]
+    },
+    "revenue": {
+        "keywords": [
+            "revenue",
+            "sales",
+            "spend amount",
+            "turnover"
+        ],
+        "formula": "SUM(orders.revenue)",
+        "rules": [
+            "Always protect equations using NULLIF(denominator, 0) to avoid division by zero runtime flags.",
+            "Filter out orders where revenue is less than or equal to zero if calculating net yields."
+        ]
+    },
+    "engagement_ratio": {
+        "formula": "DAU / MAU",
+        "rules": [
+            "For MAU, do NOT use a WHERE clause on activity_date relative to itself.",
+            "Use a JOIN or a subquery that looks for activity_date between (current_date - 29) AND current_date.",
+            "Ensure the MAU calculation is distinct for each day's window, not just the day itself."
+        ]
+    },
+    "cohort_retention": {
+        "keywords": [
+            "cohort",
+            "retention heatmap",
+            "user retention longitudinal",
+            "retention rate"
+        ],
+        "formula": "COUNT(DISTINCT orders.user_id) / NULLIF(COUNT(DISTINCT users.user_id), 0)",
+        "rules": [
+            "Building a longitudinal cohort requires computing a time delta layer. First, group users into a birth cohort month using DATE_TRUNC('month', users.signup_date).",
+            "Second, calculate the month index offset for transactions using: (EXTRACT(YEAR FROM orders.order_date) - EXTRACT(YEAR FROM users.signup_date)) * 12 + (EXTRACT(MONTH FROM orders.order_date) - EXTRACT(MONTH FROM users.signup_date)).",
+            "Represent Month 0 as the signup month, Month 1 as the first month post-signup, and calculate subsequent active users relative back to the baseline cohort size."
+        ]
+    },
+    "marketing_attribution_revenue": {
+        "keywords": [
+            "attribution",
+            "last-touch",
+            "first-touch",
+            "channel roi"
+        ],
+        "formula": "SUM(orders.revenue) grouped by marketing_campaigns.channel",
+        "rules": [
+            "To apply Last-Touch attribution, isolate the single marketing campaign row that occurred closest to, but prior to, the users.signup_date.",
+            "Use an analytical window function layer like ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY campaign_date DESC) inside a CTE where marketing_campaigns.campaign_date <= users.signup_date.",
+            "Filter for row number = 1 to capture the definitive converting channel asset before joining downstream to the total lifetime revenue generated in the orders table."
+        ]
+    },
+    "revenue_velocity_matrix": {
+        "keywords": [
+            "mrr velocity",
+            "new revenue",
+            "expansion revenue",
+            "churned revenue",
+            "watermark"
+        ],
+        "formula": "SUM(current_month.revenue) - SUM(previous_month.revenue)",
+        "rules": [
+            "To construct a monthly watermark matrix, map every user's total spend partitioned by calendar month using a summary CTE layer.",
+            "Use LAG(monthly_revenue, 1, 0.0) OVER (PARTITION BY user_id ORDER BY month) to fetch their historical comparison delta layer.",
+            "Categorize movements strictly via CASE WHEN: 'New' if lag_revenue = 0 and current_revenue > 0; 'Expansion' if current_revenue > lag_revenue and lag_revenue > 0; 'Churn' if lag_revenue > 0 and current_revenue = 0."
+        ]
+    },
+    "retention_metrics": {
+        "keywords": [
+            "retention",
+            "d+1",
+            "d+7",
+            "d+30",
+            "cohort"
+        ],
+        "formula": "100.0 * COUNT(DISTINCT retained_users) / COUNT(DISTINCT cohort_size)",
+        "rules": [
+            "CRITICAL: When calculating D+1, D+7, and D+30 retention, you must use separate subqueries or CTEs for each window to filter the cohort denominator correctly.",
+            "For D+1, the denominator must only include users where signup_date <= CURRENT_DATE - INTERVAL '1 day'.",
+            "For D+7, the denominator must only include users where signup_date <= CURRENT_DATE - INTERVAL '7 days'.",
+            "For D+30, the denominator must only include users where signup_date <= CURRENT_DATE - INTERVAL '30 days'.",
+            "Always wrap the timestamps in DATE() to ensure comparisons happen on a full calendar day level, not exact milliseconds."
+        ]
+    },
+    "revenue_concentration": {
+        "keywords": [
+            "top 5%",
+            "concentration",
+            "pareto",
+            "cohort"
+        ],
+        "formula": "Top_5_Rev / Grand_Total_Rev",
+        "rules": [
+            "Use a CTE named 'user_totals' to aggregate revenue per user.",
+            "Use a second CTE to rank users by revenue using NTILE(100).",
+            "In the final SELECT, sum the revenue where percentile <= 5 separately from the global sum of all users to ensure the denominator is correct."
+        ]
+    },
+    "funnel_analysis": {
+        "keywords": [
+            "funnel",
+            "login",
+            "view",
+            "add_to_cart",
+            "conversion"
+        ],
+        "formula": "CASE WHEN action_type = '...' THEN user_id END",
+        "rules": [
+            "All event data (login, view, add_to_cart) is stored in the 'user_activity' table.",
+            "Use the 'action_type' column to filter for specific funnel stages.",
+            "NEVER JOIN non-existent tables like 'user_logins' or 'product_views'."
+        ]
+    },
+    "churn_rate": {
+        "keywords": [
+            "churn",
+            "churned",
+            "churn rate",
+            "monthly churn",
+            "user churn",
+            "lost users",
+            "inactive users"
+        ],
+        "description": "The percentage of the previous month's active user base that failed to perform any activity in the current month.",
+        "logic": {
+            "numerator": "Distinct count of users present in Month N-1 but absent in Month N.",
+            "denominator": "Distinct count of users present in Month N-1.",
+            "time_granularity": "Monthly, defined by the start of the month (DATE_TRUNC)."
+        },
+        "business_constraints": [
+  "CHURN DEFINITION: Churn for Month N is defined as users active in Month N who are ABSENT in Month N+1.",
+  "CRITICAL — DATA FLOW: When calculating churn for Month N, the 'base population' is Month N. The 'comparison population' is Month N+1.",
+  "JOIN LOGIC: Always join the 'Base' CTE (Month N) to the 'Next' CTE (Month N+1).",
+  "JOIN CONDITION: ON base.user_id = next.user_id AND next.active_month = base.active_month + INTERVAL '1 month'.",
+  "DENOMINATOR: Always use COUNT(DISTINCT base.user_id) where base.active_month = N.",
+  "NUMERATOR: Always use COUNT(DISTINCT CASE WHEN next.user_id IS NULL THEN base.user_id END).",
+  "RESTRICTION: NEVER use - INTERVAL '1 month' (that calculates user acquisition). ALWAYS use + INTERVAL '1 month'.",
+  "RESTRICTION: The most recent month in the dataset should be excluded from the churn calculation because 'absent' status cannot be verified for the future."
+],
+        "pattern": "\n-- CORRECT churn pattern. Read comments carefully before modifying.\nWITH monthly_active AS (\n    -- Step 1: one row per (user, month) \u2014 deduplicates multiple events\n    SELECT\n        user_id,\n        DATE_TRUNC('month', activity_date) AS active_month\n    FROM user_activity\n    GROUP BY user_id, active_month\n),\nchurn_calc AS (\n    SELECT\n        prev.active_month                     AS churn_month,\n        COUNT(DISTINCT prev.user_id)          AS base_users,\n        -- CHURNED = present in prev month but ABSENT in curr month\n        -- Use CASE WHEN curr IS NULL, NOT COUNT(curr.user_id)\n        COUNT(DISTINCT CASE WHEN curr.user_id IS NULL\n              THEN prev.user_id END)          AS churned_users\n    FROM monthly_active prev\n    LEFT JOIN monthly_active curr\n           ON prev.user_id     = curr.user_id\n          AND curr.active_month = prev.active_month + INTERVAL '1 month'\n    GROUP BY prev.active_month\n)\nSELECT\n    churn_month,\n    base_users,\n    churned_users,\n    ROUND(\n        churned_users::NUMERIC / NULLIF(base_users, 0) * 100,\n    2) AS churn_rate_percentage\nFROM churn_calc\nORDER BY churn_month;\n-- Expected: churned_users < base_users always. Rate ~40-65% for this dataset.\n-- If rate > 65% consistently, the anti-join is wrong \u2014 check IS NULL condition.\n"
+    }
+}
