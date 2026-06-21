@@ -220,6 +220,13 @@ Which acquisition channel has the best D+1 retention rate?
 What is the overall conversion rate across the purchase funnel?
 ```
 
+**Recommendation steps (Optional):**
+```
+Talk to LLM first, ask for a 1-liner prompt for the metrics you want.
+Example: Calculate the monthly retention rate based solely on user activity in year 2025. A user is considered retained if they were active in the previous month and are also active in the current month. Do not use signup date, user age, minimum activity thresholds, cohort definitions, or any other constraints. Retention should be based purely on month-over-month activity presence.
+LLM Output: "Calculate month-over-month active user retention for 2025, where a user is counted as retained only if they were active in both the current month and the immediately preceding month, expressed as a percentage of the prior month's active base."
+```
+
 **Excel export (trend/dashboard):**
 ```
 Give me the monthly churn rate trend for a dashboard
