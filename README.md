@@ -1,4 +1,4 @@
-# ShopSphere Analytics Agent
+# Multi-agentic Analytics 
 
 A natural language → SQL analytics agent built to learn multi-agent orchestration, semantic rule retrieval, and self-healing LLM pipelines.
 
